@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Tiến Trình Toàn Diện & Phân Tích</title>
-    <!-- Nhúng thư viện Chart.js để vẽ biểu đồ -->
+    <title>Dashboard Tiến Trình Toàn Diện</title>
+    <link id="favicon" rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22 width=%2232%22 height=%2232%22><text y=%2226%22 font-size=%2226%22>🔥</text></svg>">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -119,6 +122,7 @@
             color: var(--text-color);
             text-transform: uppercase;
         }
+
         .time-node.active::before {
             background-color: var(--text-color);
         }
@@ -205,7 +209,7 @@
             border-radius: 30px;
             overflow: hidden;
             cursor: pointer;
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .slider-v-fill {
@@ -262,7 +266,7 @@
             background-color: var(--light-blue);
             border-radius: 30px;
             overflow: hidden;
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
             margin-right: 30px;
         }
 
@@ -343,6 +347,7 @@
         .calendar-day-box.other-month {
             background-color: var(--light-gray);
         }
+
         .calendar-day-box.other-month .day-number {
             color: #ccc;
         }
@@ -390,7 +395,7 @@
             display: none;
             width: 100%;
             max-width: 1200px;
-            grid-template-columns: repeat(2, 1fr); /* Chia lưới 2x2 cho 4 biểu đồ */
+            grid-template-columns: repeat(2, 1fr);
             gap: 25px;
             padding: 10px;
         }
@@ -400,7 +405,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 12px;
             padding: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             height: 280px;
             display: flex;
             flex-direction: column;
@@ -420,6 +425,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="menu-toggle" id="menuToggle">
@@ -433,14 +439,14 @@
             <div class="time-node active" id="tabDay">Day</div>
             <div class="time-node" id="tabWeek">Week</div>
             <div class="time-node" id="tabMonth">Month</div>
-            <div class="time-node" id="tabAnalytics">ANALYTICS</div>
+            <div class="time-node" id="tabAnalytics">Analytics</div>
         </div>
     </div>
 
     <div class="main-content">
         <div class="header-container">
             <div class="date-badge" id="dateDisplay">03/06</div>
-            
+
             <div class="filter-container" id="filterContainer">
                 <select id="monthFilter">
                     <option value="all">Tất cả (Trung bình ngày)</option>
@@ -451,7 +457,6 @@
             </div>
         </div>
 
-        <!-- 1. CHẾ ĐỘ NGÀY (DAY) -->
         <div class="view-day" id="viewDay">
             <div class="card-vertical" data-id="hoc-tap">
                 <div class="percentage">0%</div>
@@ -481,7 +486,6 @@
             </div>
         </div>
 
-        <!-- 2. CHẾ ĐỘ TUẦN (WEEK) -->
         <div class="view-week" id="viewWeek">
             <div class="card-horizontal" data-id="hoc-tap">
                 <div class="icon-emoji-h">🧠</div>
@@ -508,15 +512,19 @@
             </div>
         </div>
 
-        <!-- 3. CHẾ ĐỘ THÁNG (MONTH) -->
         <div class="view-month" id="viewMonth">
             <div class="calendar-weekdays">
-                <div>CN</div><div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div>
+                <div>CN</div>
+                <div>Thứ 2</div>
+                <div>Thứ 3</div>
+                <div>Thứ 4</div>
+                <div>Thứ 5</div>
+                <div>Thứ 6</div>
+                <div>Thứ 7</div>
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
-        <!-- 4. CHẾ ĐỘ BIỂU ĐỒ THÁNG (ANALYTICS) -->
         <div class="view-analytics" id="viewAnalytics">
             <div class="chart-box">
                 <h3>📊 Tất cả (Trung bình chung)</h3>
@@ -538,7 +546,7 @@
     </div>
 
     <script>
-        // --- ĐIỀU HƯỚNG CƠ BẢN ---
+        // --- 1. ĐIỀU HƯỚNG CƠ BẢN & ĐỊNH DẠNG NGÀY ---
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
         menuToggle.addEventListener('click', () => sidebar.classList.toggle('hidden'));
@@ -553,7 +561,7 @@
         const todayStr = getFormattedDate(today);
 
         const formatDateLabel = (date) => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
-        
+
         const currentDayOfWeek = today.getDay();
         const distanceToMonday = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
         const monday = new Date(today);
@@ -573,27 +581,24 @@
         const tabWeek = document.getElementById('tabWeek');
         const tabMonth = document.getElementById('tabMonth');
         const tabAnalytics = document.getElementById('tabAnalytics');
-        
+
         const viewDay = document.getElementById('viewDay');
         const viewWeek = document.getElementById('viewWeek');
         const viewMonth = document.getElementById('viewMonth');
         const viewAnalytics = document.getElementById('viewAnalytics');
         const filterContainer = document.getElementById('filterContainer');
 
-        // Đối tượng quản lý các đồ thị tránh vẽ đè dữ liệu lên nhau
         let chartsInstance = {};
 
         function switchTab(activeTab, showView, dateText, mode) {
             [tabDay, tabWeek, tabMonth, tabAnalytics].forEach(t => t.classList.remove('active'));
             [viewDay, viewWeek, viewMonth, viewAnalytics].forEach(v => v.style.display = 'none');
-            
+
             activeTab.classList.add('active');
             dateDisplay.textContent = dateText;
             filterContainer.style.display = (mode === 'month') ? 'block' : 'none';
 
-            if (mode === 'month') {
-                showView.style.display = 'grid';
-            } else if (mode === 'analytics') {
+            if (mode === 'month' || mode === 'analytics') {
                 showView.style.display = 'grid';
             } else {
                 showView.style.display = 'flex';
@@ -615,7 +620,40 @@
         });
 
 
-        // --- LOGIC TAB NGÀY (DAY) ---
+        // --- 2. THUẬT TOÁN ĐỔI ICON WEB TAB & CHẤM THÔNG BÁO ĐỎ ---
+        function updateWebTabFavicon() {
+            // Đọc dữ liệu hôm nay xem tổng đã kéo cái nào chưa
+            const ht = parseInt(localStorage.getItem(`progress-hoc-tap-${todayStr}`) || 0, 10);
+            const sk = parseInt(localStorage.getItem(`progress-suc-khoe-${todayStr}`) || 0, 10);
+            const dt = parseInt(localStorage.getItem(`progress-dau-tu-${todayStr}`) || 0, 10);
+            const totalToday = ht + sk + dt;
+
+            const faviconElement = document.getElementById('favicon');
+
+            // Sử dụng HTML5 Canvas ẩn để tự vẽ icon kèm chấm đỏ sống động
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+
+            // 1. Vẽ Emoji gốc làm nền (Ví dụ dùng icon 🌱 hoặc bạn có thể đổi text tùy ý)
+            ctx.font = '24px serif';
+            ctx.fillText('🌱', 0, 26);
+
+            // 2. Nếu CHƯA kéo bất kỳ thanh nào hôm nay (Tổng bằng 0) -> Vẽ chấm tròn thông báo đỏ
+            if (totalToday === 0) {
+                ctx.beginPath();
+                ctx.arc(25, 7, 5, 0, 2 * Math.PI); // Vẽ chấm tròn ở góc trên bên phải
+                ctx.fillStyle = '#ff3b30'; // Màu đỏ cảnh báo Apple/Google chuẩn
+                ctx.fill();
+            }
+
+            // Xuất dữ liệu Canvas thành chuỗi Base64 và gán thẳng vào Web Tab Favicon
+            faviconElement.href = canvas.toDataURL('image/png');
+        }
+
+
+        // --- 3. LOGIC TAB NGÀY (DAY) ---
         const dayCards = document.querySelectorAll('.card-vertical');
         dayCards.forEach(card => {
             const id = card.getAttribute('data-id');
@@ -635,6 +673,9 @@
                 sliderFill.style.height = percentage + '%';
                 percentageText.textContent = percentage + '%';
                 localStorage.setItem(storageKey, percentage);
+
+                // Cập nhật lại chấm đỏ Web Tab ngay khi người dùng buông hoặc di chuột kéo tiến trình
+                updateWebTabFavicon();
             }
 
             let isDragging = false;
@@ -647,11 +688,14 @@
             percentageText.textContent = (savedProgress || 0) + '%';
         });
 
+        // Chạy kiểm tra và hiển thị chấm đỏ ngay khi vừa tải hoặc mở trang web lên
+        updateWebTabFavicon();
 
-        // --- LOGIC TAB TUẦN (WEEK) ---
+
+        // --- 4. LOGIC TAB TUẦN (WEEK) ---
         function calculateWeekProgress() {
             const weekDaysStr = [];
-            for(let i = 0; i < 7; i++) {
+            for (let i = 0; i < 7; i++) {
                 const d = new Date(monday);
                 d.setDate(monday.getDate() + i);
                 weekDaysStr.push(getFormattedDate(d));
@@ -674,7 +718,7 @@
         }
 
 
-        // --- LOGIC LƯỚI LỊCH THÁNG (MONTH) ---
+        // --- 5. LOGIC LƯỚI LỊCH THÁNG (MONTH) ---
         const calendarGrid = document.getElementById('calendarGrid');
         const monthFilter = document.getElementById('monthFilter');
         monthFilter.addEventListener('change', renderCalendarGrid);
@@ -696,7 +740,7 @@
             for (let i = 1; i <= totalDaysInMonth; i++) {
                 daysArray.push({ date: new Date(currentYear, currentMonth, i), isCurrentMonth: true });
             }
-            while(daysArray.length < 35 && daysArray.length < 42 || daysArray.length % 7 !== 0) {
+            while (daysArray.length < 35 && daysArray.length < 42 || daysArray.length % 7 !== 0) {
                 let nextMonthDay = daysArray.length - totalDaysInMonth - startDayIndex + 1;
                 daysArray.push({ date: new Date(currentYear, currentMonth + 1, nextMonthDay), isCurrentMonth: false });
             }
@@ -739,23 +783,19 @@
         }
 
 
-        // --- LOGIC XỬ LÝ BIỂU ĐỒ (ANALYTICS) ---
+        // --- 6. LOGIC BIỂU ĐỒ (ANALYTICS) ---
         function renderAnalyticsCharts() {
-            // Lấy tổng số ngày trong tháng hiện tại
             const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            
-            // Khởi tạo các mảng chứa nhãn (Ngày 1, Ngày 2...) và dữ liệu tiến độ
             const labels = [];
             const dataAll = [];
             const dataHocTap = [];
             const dataSucKhoe = [];
             const dataDauTu = [];
 
-            // Quét dữ liệu từ ngày 1 đến ngày cuối cùng của tháng
             for (let i = 1; i <= totalDaysInMonth; i++) {
                 labels.push(`Ngày ${i}`);
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                
+
                 const ht = parseInt(localStorage.getItem(`progress-hoc-tap-${dateStr}`) || 0, 10);
                 const sk = parseInt(localStorage.getItem(`progress-suc-khoe-${dateStr}`) || 0, 10);
                 const dt = parseInt(localStorage.getItem(`progress-dau-tu-${dateStr}`) || 0, 10);
@@ -767,7 +807,6 @@
                 dataAll.push(avg);
             }
 
-            // Hàm cấu hình khung chuẩn cho Chart.js
             const getChartConfig = (labelName, dataValues, lineColor) => {
                 return {
                     type: 'line',
@@ -777,9 +816,9 @@
                             label: labelName,
                             data: dataValues,
                             borderColor: lineColor,
-                            backgroundColor: lineColor + '1A', // Tạo độ trong suốt cho vùng đổ màu đổ bóng
+                            backgroundColor: lineColor + '1A',
                             borderWidth: 3,
-                            tension: 0.3, // Làm mượt đường cong đồ thị
+                            tension: 0.3,
                             fill: true,
                             pointRadius: 2,
                             pointHoverRadius: 6
@@ -797,13 +836,11 @@
                 };
             };
 
-            // Hủy các biểu đồ cũ nếu đã tồn tại để tránh lỗi render đè của Chart.js
-            if(chartsInstance.all) chartsInstance.all.destroy();
-            if(chartsInstance.hocTap) chartsInstance.hocTap.destroy();
-            if(chartsInstance.sucKhoe) chartsInstance.sucKhoe.destroy();
-            if(chartsInstance.dauTu) chartsInstance.dauTu.destroy();
+            if (chartsInstance.all) chartsInstance.all.destroy();
+            if (chartsInstance.hocTap) chartsInstance.hocTap.destroy();
+            if (chartsInstance.sucKhoe) chartsInstance.sucKhoe.destroy();
+            if (chartsInstance.dauTu) chartsInstance.dauTu.destroy();
 
-            // Khởi tạo và vẽ 4 biểu đồ lên 4 thẻ canvas
             chartsInstance.all = new Chart(document.getElementById('chartAll'), getChartConfig('Trung bình', dataAll, '#76db5a'));
             chartsInstance.hocTap = new Chart(document.getElementById('chartHocTap'), getChartConfig('Học tập', dataHocTap, '#4a82fa'));
             chartsInstance.sucKhoe = new Chart(document.getElementById('chartSucKhoe'), getChartConfig('Sức khỏe', dataSucKhoe, '#ff6b6b'));
@@ -811,4 +848,5 @@
         }
     </script>
 </body>
+
 </html>
