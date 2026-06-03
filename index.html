@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Tiến Trình Toàn Diện & Phân Tích</title>
+    <!-- Nhúng thư viện Chart.js để vẽ biểu đồ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --sidebar-bg: #f0f0f0;
+            --primary-blue: #4a82fa;
+            --light-blue: #bfe0ff;
+            --text-color: #000000;
+            --gray-text: #888888;
+            --light-gray: #f9f9f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Nút Menu Ba Gạch */
+        .menu-toggle {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            z-index: 10;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        /* Thanh Sidebar */
+        .sidebar {
+            width: 180px;
+            height: 100%;
+            background-color: var(--sidebar-bg);
+            padding-top: 80px;
+            padding-left: 25px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+            flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar.hidden {
+            width: 0;
+            padding-left: 0;
+            overflow: hidden;
+            border-right: none;
+        }
+
+        .timeline {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            padding-left: 15px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background-color: var(--text-color);
+        }
+
+        .time-node {
+            position: relative;
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--gray-text);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .time-node::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 7px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--sidebar-bg);
+            border: 2px solid var(--text-color);
+            z-index: 2;
+        }
+
+        .time-node.active {
+            font-weight: bold;
+            color: var(--text-color);
+            text-transform: uppercase;
+        }
+        .time-node.active::before {
+            background-color: var(--text-color);
+        }
+
+        /* Khu vực hiển thị nội dung chính */
+        .main-content {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Header chứa Badge ngày và bộ lọc */
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            min-height: 50px;
+        }
+
+        .date-badge {
+            background-color: #76db5a;
+            color: #000000;
+            font-size: 22px;
+            font-weight: bold;
+            padding: 8px 40px;
+            border-radius: 25px;
+            text-align: center;
+        }
+
+        .filter-container {
+            position: absolute;
+            right: 40px;
+            display: none;
+        }
+
+        .filter-container select {
+            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 2px solid var(--text-color);
+            background-color: white;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* --- 1. GIAO DIỆN CHẾ ĐỘ NGÀY (DAY) --- */
+        .view-day {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 900px;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
+        .card-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 200px;
+        }
+
+        .card-vertical .percentage {
+            font-size: 26px;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .slider-v-container {
+            position: relative;
+            width: 60px;
+            height: 320px;
+            background-color: var(--light-blue);
+            border-radius: 30px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .slider-v-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: var(--primary-blue);
+            border-radius: 30px;
+            transition: height 0.05s linear;
+            pointer-events: none;
+        }
+
+        .icon-emoji-v {
+            font-size: 50px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .card-title-v {
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        /* --- 2. GIAO DIỆN CHẾ ĐỘ TUẦN (WEEK) --- */
+        .view-week {
+            display: none;
+            flex-direction: column;
+            gap: 40px;
+            width: 100%;
+            max-width: 850px;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
+        .card-horizontal {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .icon-emoji-h {
+            font-size: 50px;
+            width: 80px;
+            text-align: left;
+        }
+
+        .slider-h-container {
+            position: relative;
+            flex: 1;
+            height: 60px;
+            background-color: var(--light-blue);
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            margin-right: 30px;
+        }
+
+        .slider-h-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-blue);
+            border-radius: 30px;
+        }
+
+        .card-horizontal .percentage {
+            font-size: 26px;
+            font-weight: 500;
+            width: 80px;
+            text-align: right;
+        }
+
+        /* --- 3. GIAO DIỆN CHẾ ĐỘ THÁNG (MONTH) --- */
+        .view-month {
+            display: none;
+            width: 100%;
+            max-width: 1100px;
+            flex-direction: column;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .calendar-weekdays div {
+            padding: 10px 0;
+            text-transform: uppercase;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            border-top: 1px solid #e0e0e0;
+            border-left: 1px solid #e0e0e0;
+            background-color: #fff;
+        }
+
+        .calendar-day-box {
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            height: 95px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .day-number-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: inline-block;
+            text-align: center;
+            padding: 2px;
+        }
+
+        .calendar-day-box.other-month {
+            background-color: var(--light-gray);
+        }
+        .calendar-day-box.other-month .day-number {
+            color: #ccc;
+        }
+
+        .calendar-day-box.today-highlight .day-number {
+            background-color: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            line-height: 20px;
+        }
+
+        .mini-progress-container {
+            position: relative;
+            width: 100%;
+            height: 14px;
+            background-color: var(--light-blue);
+            border-radius: 7px;
+            overflow: hidden;
+            margin-top: auto;
+            margin-bottom: 4px;
+        }
+
+        .mini-progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-blue);
+            border-radius: 7px;
+        }
+
+        .mini-percentage-text {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            color: var(--text-color);
+            width: 100%;
+        }
+
+        /* --- 4. GIAO DIỆN TAB BIỂU ĐỒ THÁNG (ANALYTICS) --- */
+        .view-analytics {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            grid-template-columns: repeat(2, 1fr); /* Chia lưới 2x2 cho 4 biểu đồ */
+            gap: 25px;
+            padding: 10px;
+        }
+
+        .chart-box {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .chart-box h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="timeline">
+            <div class="time-node active" id="tabDay">Day</div>
+            <div class="time-node" id="tabWeek">Week</div>
+            <div class="time-node" id="tabMonth">Month</div>
+            <div class="time-node" id="tabAnalytics">ANALYTICS</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header-container">
+            <div class="date-badge" id="dateDisplay">03/06</div>
+            
+            <div class="filter-container" id="filterContainer">
+                <select id="monthFilter">
+                    <option value="all">Tất cả (Trung bình ngày)</option>
+                    <option value="hoc-tap">🧠 Học tập</option>
+                    <option value="suc-khoe">💪 Sức khỏe</option>
+                    <option value="dau-tu">📈 Đầu tư</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 1. CHẾ ĐỘ NGÀY (DAY) -->
+        <div class="view-day" id="viewDay">
+            <div class="card-vertical" data-id="hoc-tap">
+                <div class="percentage">0%</div>
+                <div class="slider-v-container">
+                    <div class="slider-v-fill"></div>
+                </div>
+                <div class="icon-emoji-v">🧠</div>
+                <div class="card-title-v">Học tập</div>
+            </div>
+
+            <div class="card-vertical" data-id="suc-khoe">
+                <div class="percentage">0%</div>
+                <div class="slider-v-container">
+                    <div class="slider-v-fill"></div>
+                </div>
+                <div class="icon-emoji-v">💪</div>
+                <div class="card-title-v">Sức khỏe</div>
+            </div>
+
+            <div class="card-vertical" data-id="dau-tu">
+                <div class="percentage">0%</div>
+                <div class="slider-v-container">
+                    <div class="slider-v-fill"></div>
+                </div>
+                <div class="icon-emoji-v">📈</div>
+                <div class="card-title-v">Đầu tư</div>
+            </div>
+        </div>
+
+        <!-- 2. CHẾ ĐỘ TUẦN (WEEK) -->
+        <div class="view-week" id="viewWeek">
+            <div class="card-horizontal" data-id="hoc-tap">
+                <div class="icon-emoji-h">🧠</div>
+                <div class="slider-h-container">
+                    <div class="slider-h-fill"></div>
+                </div>
+                <div class="percentage">0%</div>
+            </div>
+
+            <div class="card-horizontal" data-id="suc-khoe">
+                <div class="icon-emoji-h">💪</div>
+                <div class="slider-h-container">
+                    <div class="slider-h-fill"></div>
+                </div>
+                <div class="percentage">0%</div>
+            </div>
+
+            <div class="card-horizontal" data-id="dau-tu">
+                <div class="icon-emoji-h">📈</div>
+                <div class="slider-h-container">
+                    <div class="slider-h-fill"></div>
+                </div>
+                <div class="percentage">0%</div>
+            </div>
+        </div>
+
+        <!-- 3. CHẾ ĐỘ THÁNG (MONTH) -->
+        <div class="view-month" id="viewMonth">
+            <div class="calendar-weekdays">
+                <div>CN</div><div>Thứ 2</div><div>Thứ 3</div><div>Thứ 4</div><div>Thứ 5</div><div>Thứ 6</div><div>Thứ 7</div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <!-- 4. CHẾ ĐỘ BIỂU ĐỒ THÁNG (ANALYTICS) -->
+        <div class="view-analytics" id="viewAnalytics">
+            <div class="chart-box">
+                <h3>📊 Tất cả (Trung bình chung)</h3>
+                <div class="chart-wrapper"><canvas id="chartAll"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <h3>🧠 Tiến trình Học tập</h3>
+                <div class="chart-wrapper"><canvas id="chartHocTap"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <h3>💪 Tiến trình Sức khỏe</h3>
+                <div class="chart-wrapper"><canvas id="chartSucKhoe"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <h3>📈 Tiến trình Đầu tư</h3>
+                <div class="chart-wrapper"><canvas id="chartDauTu"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ĐIỀU HƯỚNG CƠ BẢN ---
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('hidden'));
+
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+
+        const getFormattedDate = (date) => {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        };
+        const todayStr = getFormattedDate(today);
+
+        const formatDateLabel = (date) => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        const currentDayOfWeek = today.getDay();
+        const distanceToMonday = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + distanceToMonday);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+
+        const dayLabelText = formatDateLabel(today);
+        const weekLabelText = `${formatDateLabel(monday)} - ${formatDateLabel(sunday)}`;
+        const monthLabelText = `Tháng ${currentMonth + 1}`;
+        const analyticsLabelText = `Xu Hướng Tháng ${currentMonth + 1}`;
+
+        const dateDisplay = document.getElementById('dateDisplay');
+        dateDisplay.textContent = dayLabelText;
+
+        const tabDay = document.getElementById('tabDay');
+        const tabWeek = document.getElementById('tabWeek');
+        const tabMonth = document.getElementById('tabMonth');
+        const tabAnalytics = document.getElementById('tabAnalytics');
+        
+        const viewDay = document.getElementById('viewDay');
+        const viewWeek = document.getElementById('viewWeek');
+        const viewMonth = document.getElementById('viewMonth');
+        const viewAnalytics = document.getElementById('viewAnalytics');
+        const filterContainer = document.getElementById('filterContainer');
+
+        // Đối tượng quản lý các đồ thị tránh vẽ đè dữ liệu lên nhau
+        let chartsInstance = {};
+
+        function switchTab(activeTab, showView, dateText, mode) {
+            [tabDay, tabWeek, tabMonth, tabAnalytics].forEach(t => t.classList.remove('active'));
+            [viewDay, viewWeek, viewMonth, viewAnalytics].forEach(v => v.style.display = 'none');
+            
+            activeTab.classList.add('active');
+            dateDisplay.textContent = dateText;
+            filterContainer.style.display = (mode === 'month') ? 'block' : 'none';
+
+            if (mode === 'month') {
+                showView.style.display = 'grid';
+            } else if (mode === 'analytics') {
+                showView.style.display = 'grid';
+            } else {
+                showView.style.display = 'flex';
+            }
+        }
+
+        tabDay.addEventListener('click', () => switchTab(tabDay, viewDay, dayLabelText, 'day'));
+        tabWeek.addEventListener('click', () => {
+            switchTab(tabWeek, viewWeek, weekLabelText, 'week');
+            calculateWeekProgress();
+        });
+        tabMonth.addEventListener('click', () => {
+            switchTab(tabMonth, viewMonth, monthLabelText, 'month');
+            renderCalendarGrid();
+        });
+        tabAnalytics.addEventListener('click', () => {
+            switchTab(tabAnalytics, viewAnalytics, analyticsLabelText, 'analytics');
+            renderAnalyticsCharts();
+        });
+
+
+        // --- LOGIC TAB NGÀY (DAY) ---
+        const dayCards = document.querySelectorAll('.card-vertical');
+        dayCards.forEach(card => {
+            const id = card.getAttribute('data-id');
+            const sliderContainer = card.querySelector('.slider-v-container');
+            const sliderFill = card.querySelector('.slider-v-fill');
+            const percentageText = card.querySelector('.percentage');
+            const storageKey = `progress-${id}-${todayStr}`;
+
+            function updateProgress(clientY) {
+                const rect = sliderContainer.getBoundingClientRect();
+                let heightPx = rect.bottom - clientY;
+                let percentage = Math.round((heightPx / rect.height) * 100);
+
+                if (percentage < 0) percentage = 0;
+                if (percentage > 100) percentage = 100;
+
+                sliderFill.style.height = percentage + '%';
+                percentageText.textContent = percentage + '%';
+                localStorage.setItem(storageKey, percentage);
+            }
+
+            let isDragging = false;
+            sliderContainer.addEventListener('mousedown', (e) => { isDragging = true; updateProgress(e.clientY); });
+            window.addEventListener('mousemove', (e) => { if (isDragging) updateProgress(e.clientY); });
+            window.addEventListener('mouseup', () => isDragging = false);
+
+            const savedProgress = localStorage.getItem(storageKey);
+            sliderFill.style.height = (savedProgress || 0) + '%';
+            percentageText.textContent = (savedProgress || 0) + '%';
+        });
+
+
+        // --- LOGIC TAB TUẦN (WEEK) ---
+        function calculateWeekProgress() {
+            const weekDaysStr = [];
+            for(let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                weekDaysStr.push(getFormattedDate(d));
+            }
+
+            document.querySelectorAll('.card-horizontal').forEach(card => {
+                const id = card.getAttribute('data-id');
+                const sliderFill = card.querySelector('.slider-h-fill');
+                const percentageText = card.querySelector('.percentage');
+                let total = 0;
+
+                weekDaysStr.forEach(dStr => {
+                    total += parseInt(localStorage.getItem(`progress-${id}-${dStr}`) || 0, 10);
+                });
+
+                const average = Math.round(total / 7);
+                sliderFill.style.width = average + '%';
+                percentageText.textContent = average + '%';
+            });
+        }
+
+
+        // --- LOGIC LƯỚI LỊCH THÁNG (MONTH) ---
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthFilter = document.getElementById('monthFilter');
+        monthFilter.addEventListener('change', renderCalendarGrid);
+
+        function renderCalendarGrid() {
+            calendarGrid.innerHTML = '';
+            const selectedFilter = monthFilter.value;
+
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            const startDayIndex = firstDayOfMonth.getDay();
+            const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const totalDaysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+            const daysArray = [];
+
+            for (let i = startDayIndex - 1; i >= 0; i--) {
+                daysArray.push({ date: new Date(currentYear, currentMonth - 1, totalDaysInPrevMonth - i), isCurrentMonth: false });
+            }
+            for (let i = 1; i <= totalDaysInMonth; i++) {
+                daysArray.push({ date: new Date(currentYear, currentMonth, i), isCurrentMonth: true });
+            }
+            while(daysArray.length < 35 && daysArray.length < 42 || daysArray.length % 7 !== 0) {
+                let nextMonthDay = daysArray.length - totalDaysInMonth - startDayIndex + 1;
+                daysArray.push({ date: new Date(currentYear, currentMonth + 1, nextMonthDay), isCurrentMonth: false });
+            }
+
+            daysArray.forEach(dayObj => {
+                const dayBox = document.createElement('div');
+                dayBox.classList.add('calendar-day-box');
+                if (!dayObj.isCurrentMonth) dayBox.classList.add('other-month');
+
+                const dStr = getFormattedDate(dayObj.date);
+                if (dStr === todayStr) dayBox.classList.add('today-highlight');
+
+                const hocTapVal = parseInt(localStorage.getItem(`progress-hoc-tap-${dStr}`) || 0, 10);
+                const sucKhoeVal = parseInt(localStorage.getItem(`progress-suc-khoe-${dStr}`) || 0, 10);
+                const dauTuVal = parseInt(localStorage.getItem(`progress-dau-tu-${dStr}`) || 0, 10);
+
+                let finalPercentage = 0;
+                if (selectedFilter === 'all') {
+                    finalPercentage = Math.round((hocTapVal + sucKhoeVal + dauTuVal) / 3);
+                } else if (selectedFilter === 'hoc-tap') {
+                    finalPercentage = hocTapVal;
+                } else if (selectedFilter === 'suc-khoe') {
+                    finalPercentage = sucKhoeVal;
+                } else if (selectedFilter === 'dau-tu') {
+                    finalPercentage = dauTuVal;
+                }
+
+                let dayNumberText = dayObj.date.getDate();
+                if (dayObj.date.getDate() === 1) {
+                    dayNumberText = `1 thg ${dayObj.date.getMonth() + 1}`;
+                }
+
+                dayBox.innerHTML = `
+                    <div class="day-number-container"><span class="day-number">${dayNumberText}</span></div>
+                    <div class="mini-progress-container"><div class="mini-progress-fill" style="width: ${finalPercentage}%"></div></div>
+                    <div class="mini-percentage-text">${finalPercentage}%</div>
+                `;
+                calendarGrid.appendChild(dayBox);
+            });
+        }
+
+
+        // --- LOGIC XỬ LÝ BIỂU ĐỒ (ANALYTICS) ---
+        function renderAnalyticsCharts() {
+            // Lấy tổng số ngày trong tháng hiện tại
+            const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Khởi tạo các mảng chứa nhãn (Ngày 1, Ngày 2...) và dữ liệu tiến độ
+            const labels = [];
+            const dataAll = [];
+            const dataHocTap = [];
+            const dataSucKhoe = [];
+            const dataDauTu = [];
+
+            // Quét dữ liệu từ ngày 1 đến ngày cuối cùng của tháng
+            for (let i = 1; i <= totalDaysInMonth; i++) {
+                labels.push(`Ngày ${i}`);
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                const ht = parseInt(localStorage.getItem(`progress-hoc-tap-${dateStr}`) || 0, 10);
+                const sk = parseInt(localStorage.getItem(`progress-suc-khoe-${dateStr}`) || 0, 10);
+                const dt = parseInt(localStorage.getItem(`progress-dau-tu-${dateStr}`) || 0, 10);
+                const avg = Math.round((ht + sk + dt) / 3);
+
+                dataHocTap.push(ht);
+                dataSucKhoe.push(sk);
+                dataDauTu.push(dt);
+                dataAll.push(avg);
+            }
+
+            // Hàm cấu hình khung chuẩn cho Chart.js
+            const getChartConfig = (labelName, dataValues, lineColor) => {
+                return {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: labelName,
+                            data: dataValues,
+                            borderColor: lineColor,
+                            backgroundColor: lineColor + '1A', // Tạo độ trong suốt cho vùng đổ màu đổ bóng
+                            borderWidth: 3,
+                            tension: 0.3, // Làm mượt đường cong đồ thị
+                            fill: true,
+                            pointRadius: 2,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { min: 0, max: 100, grid: { color: '#f0f0f0' }, ticks: { callback: value => value + '%' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                };
+            };
+
+            // Hủy các biểu đồ cũ nếu đã tồn tại để tránh lỗi render đè của Chart.js
+            if(chartsInstance.all) chartsInstance.all.destroy();
+            if(chartsInstance.hocTap) chartsInstance.hocTap.destroy();
+            if(chartsInstance.sucKhoe) chartsInstance.sucKhoe.destroy();
+            if(chartsInstance.dauTu) chartsInstance.dauTu.destroy();
+
+            // Khởi tạo và vẽ 4 biểu đồ lên 4 thẻ canvas
+            chartsInstance.all = new Chart(document.getElementById('chartAll'), getChartConfig('Trung bình', dataAll, '#76db5a'));
+            chartsInstance.hocTap = new Chart(document.getElementById('chartHocTap'), getChartConfig('Học tập', dataHocTap, '#4a82fa'));
+            chartsInstance.sucKhoe = new Chart(document.getElementById('chartSucKhoe'), getChartConfig('Sức khỏe', dataSucKhoe, '#ff6b6b'));
+            chartsInstance.dauTu = new Chart(document.getElementById('chartDauTu'), getChartConfig('Đầu tư', dataDauTu, '#f1c40f'));
+        }
+    </script>
+</body>
+</html>
