@@ -815,13 +815,14 @@
     </div>
 
     <!-- POP-UP RESUME (HIỆN PDF) -->
-    <div id="resumePopup" class="image-lightbox" onclick="closeResumePopup()">
-        <div class="lightbox-content" onclick="event.stopPropagation()" style="width: 80vw; height: 85vh;">
-            <button class="close-lightbox" onclick="closeResumePopup()">✕</button>
-            <iframe id="resumePdfFrame" src="https://aywsfoxxecbqpxngsjow.supabase.co/storage/v1/object/sign/IMG%20profile/Business%20Analyst%20Intern%20Full-time%20-%20Le%20Quang%20Binh.pdf?token=eyJraWQiOiI0MzM1ODQ4Yi1mYzAwLTQ2YjktOTA3ZC04YmVhMjU4ZTRhZGMiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJJTUcgcHJvZmlsZS9CdXNpbmVzcyBBbmFseXN0IEludGVybiBGdWxsLXRpbWUgLSBMZSBRdWFuZyBCaW5oLnBkZiIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODkyNDc3ODIsImV4cCI6MTgyMDc4Mzc4Mn0.DI4nieHcjYjLsZ8A094MfFarqtWe7tBdiRAN5U-eHDHXSux_oDg7V4mkAePwY98f9qCKxJzXlGFtshIzucGNDA"
-                style="width: 100%; height: 85vh; border: none; border-radius: 12px;"></iframe>
-        </div>
+ <div id="resumePopup" class="image-lightbox" onclick="closeResumePopup()">
+    <div class="lightbox-content" onclick="event.stopPropagation()" style="width: 80vw; height: 85vh; background: #fff; padding: 20px; border-radius: 12px; display: flex; flex-direction: column;">
+        <button class="close-lightbox" onclick="closeResumePopup()">✕</button>
+        <object id="resumePdfFrame" data="https://aywsfoxxecbqpxngsjow.supabase.co/storage/v1/object/sign/IMG%20profile/Business%20Analyst%20Intern%20Full-time%20-%20Le%20Quang%20Binh.pdf?token=eyJraWQiOiI0MzM1ODQ4Yi1mYzAwLTQ2YjktOTA3ZC04YmVhMjU4ZTRhZGMiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJJTUcgcHJvZmlsZS9CdXNpbmVzcyBBbmFseXN0IEludGVybiBGdWxsLXRpbWUgLSBMZSBRdWFuZyBCaW5oLnBkZiIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODkyNDc3ODIsImV4cCI6MTgyMDc4Mzc4Mn0.DI4nieHcjYjLsZ8A094MfFarqtWe7tBdiRAN5U-eHDHXSux_oDg7V4mkAePwY98f9qCKxJzXlGFtshIzucGNDA" type="application/pdf" style="width: 100%; height: 100%; border: none;">
+            <p style="text-align: center; padding: 20px; font-family: 'Inter', sans-serif;">Trình duyệt của bạn không hỗ trợ xem PDF trực tiếp. Vui lòng tải về tại đây: <a id="pdfDownloadLink" href="https://aywsfoxxecbqpxngsjow.supabase.co/storage/v1/object/sign/IMG%20profile/Business%20Analyst%20Intern%20Full-time%20-%20Le%20Quang%20Binh.pdf?token=eyJraWQiOiI0MzM1ODQ4Yi1mYzAwLTQ2YjktOTA3ZC04YmVhMjU4ZTRhZGMiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJJTUcgcHJvZmlsZS9CdXNpbmVzcyBBbmFseXN0IEludGVybiBGdWxsLXRpbWUgLSBMZSBRdWFuZyBCaW5oLnBkZiIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODkyNDc3ODIsImV4cCI6MTgyMDc4Mzc4Mn0.DI4nieHcjYjLsZ8A094MfFarqtWe7tBdiRAN5U-eHDHXSux_oDg7V4mkAePwY98f9qCKxJzXlGFtshIzucGNDA" target="_blank" style="color: #e63946; font-weight: 600;">Tải CV PDF</a></p>
+        </object>
     </div>
+</div>
 
     <!-- FOOTER (GET IN TOUCH CHUYỂN XUỐNG DƯỚI) -->
     <div id="contact" class="contact-section fade-in">
